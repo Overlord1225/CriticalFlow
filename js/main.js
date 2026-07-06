@@ -2,8 +2,11 @@ import { getCurrentUser, requireAuth, requireRole } from './auth.js';
 import { 
   getStudent, getProgress, getSchedules, getNotifications, 
   getOpenSlots, markRead, getAllSchedules, logout,
+  getAvailableSlots, claimSlot, sendAnnouncement, markAbsent,
+  getStudentProgressSummary, getHospitalUtilization,
   supabase
 } from './data.js';
+import { showToast, showLoading, hideLoading } from './utils.js';
 
 // ------ Shared: render sidebar ------
 export function renderSidebar(activePage) {
@@ -15,6 +18,7 @@ export function renderSidebar(activePage) {
     navItems = [
       { label: 'Dashboard', icon: 'fa-house', page: 'student-dashboard.html' },
       { label: 'Case Passport', icon: 'fa-passport', page: 'case-passport.html' },
+      { label: 'Opportunity Board', icon: 'fa-bullhorn', page: 'opportunity-board.html' },
       { label: 'QR Attendance', icon: 'fa-qrcode', page: 'qr-attendance.html' },
       { label: 'Notifications', icon: 'fa-bell', page: 'notifications.html' },
     ];
@@ -46,50 +50,48 @@ export function renderSidebar(activePage) {
 
 // ------ Student dashboard ------
 export async function initStudentDashboard() {
+  const mainContent = document.querySelector('.main-content');
   try {
     const user = requireAuth();
     if (!user || user.role !== 'student') return;
+    showLoading('recentNotifs', 'Loading your dashboard...');
+
     const student = await getStudent(user.id);
     const progress = await getProgress(user.id);
     const schedules = await getSchedules(user.id);
     const notifs = await getNotifications(user.id);
     const unread = notifs.filter(n => !n.read).length;
 
-    const nameEl = document.getElementById('studentName');
-    if (nameEl) nameEl.textContent = student.name;
-    const progEl = document.getElementById('studentProgram');
-    if (progEl) progEl.textContent = student.program;
+    document.getElementById('studentName').textContent = student.name;
+    document.getElementById('studentProgram').textContent = student.program;
 
     const total = progress.cases.length;
     const completed = progress.cases.filter(c => c.completed).length;
-    const totalEl = document.getElementById('totalCases');
-    if (totalEl) totalEl.textContent = total;
-    const compEl = document.getElementById('completedCases');
-    if (compEl) compEl.textContent = completed;
-    const pendEl = document.getElementById('pendingCases');
-    if (pendEl) pendEl.textContent = total - completed;
-    const unreadEl = document.getElementById('unreadBadge');
-    if (unreadEl) unreadEl.textContent = unread;
+    document.getElementById('totalCases').textContent = total;
+    document.getElementById('completedCases').textContent = completed;
+    document.getElementById('pendingCases').textContent = total - completed;
+    document.getElementById('unreadBadge').textContent = unread;
 
     const upcoming = schedules.filter(s => s.status === 'scheduled');
     const tbody = document.getElementById('upcomingTable');
-    if (tbody) {
-      tbody.innerHTML = upcoming.map(s => `
-        <tr><td>${s.date}</td><td>${s.hospital}</td><td>${s.case_type}</td><td><span class="status-badge scheduled">Scheduled</span></td></tr>
-      `).join('') || '<tr><td colspan="4">No upcoming duties</td></tr>';
-    }
+    tbody.innerHTML = upcoming.map(s => `
+      <tr><td>${s.date}</td><td>${s.hospital}</td><td>${s.case_type}</td><td><span class="status-badge scheduled">Scheduled</span></td></tr>
+    `).join('') || '<tr><td colspan="4">No upcoming duties</td></tr>';
 
     const notifList = document.getElementById('recentNotifs');
-    if (notifList) {
-      notifList.innerHTML = notifs.slice(0, 3).map(n => `
-        <div class="notif-item ${n.read?'':'unread'}">
-          <span class="notif-text">${n.message}</span>
-          <span class="notif-time">${new Date(n.created_at).toLocaleString()}</span>
-        </div>
-      `).join('') || '<p>No notifications</p>';
-    }
+    notifList.innerHTML = notifs.slice(0, 3).map(n => `
+      <div class="notif-item ${n.read?'':'unread'}">
+        <span class="notif-text">${n.message}</span>
+        <span class="notif-time">${new Date(n.created_at).toLocaleString()}</span>
+      </div>
+    `).join('') || '<p>No notifications</p>';
+
+    hideLoading('recentNotifs');
+    showToast('Dashboard loaded successfully', 'success', 2000);
   } catch (err) {
     console.error('Student dashboard error:', err);
+    hideLoading('recentNotifs');
+    showToast('Failed to load dashboard: ' + err.message, 'error');
   }
 }
 
@@ -98,13 +100,14 @@ export async function initSchedulerDashboard() {
   try {
     const user = requireAuth();
     if (!user || (user.role !== 'scheduler' && user.role !== 'admin')) return;
+    showLoading('allSchedTable', 'Loading schedules...');
+
     document.getElementById('schName').textContent = user.name;
 
     const allSched = await getAllSchedules();
     const slots = await getOpenSlots();
     const completed = allSched.filter(s => s.status === 'completed').length;
 
-    // Fix: get student count correctly
     const { count, error } = await supabase
       .from('users')
       .select('id', { count: 'exact', head: true })
@@ -121,9 +124,13 @@ export async function initSchedulerDashboard() {
     tbody.innerHTML = allSched.map(s => `
       <tr><td>${s.studentName || 'Unknown'}</td><td>${s.date}</td><td>${s.hospital}</td><td>${s.case_type}</td><td><span class="status-badge ${s.status}">${s.status}</span></td></tr>
     `).join('');
+
+    hideLoading('allSchedTable');
+    showToast('Scheduler data loaded', 'success', 2000);
   } catch (err) {
     console.error('Scheduler dashboard error:', err);
-    document.querySelector('.main-content').innerHTML += `<p style="color:red;">Error loading data: ${err.message}</p>`;
+    hideLoading('allSchedTable');
+    showToast('Error loading scheduler data: ' + err.message, 'error');
   }
 }
 
@@ -132,64 +139,314 @@ export async function initCIDashboard() {
   try {
     const user = requireAuth();
     if (!user || user.role !== 'ci') return;
-    const ciNameEl = document.getElementById('ciName');
-    if (ciNameEl) ciNameEl.textContent = user.name;
+    showLoading('ciStudentsTable', 'Loading students...');
 
-    // Fetch all students (in a real app, this would be filtered by CI assignment)
+    document.getElementById('ciName').textContent = user.name;
+
     const { data: students, error } = await supabase
       .from('users')
       .select('name, program, students(year)')
       .eq('role', 'student');
-    if (error) {
-      console.error(error);
-      return;
-    }
+    if (error) throw error;
+
     const tbody = document.getElementById('ciStudentsTable');
-    if (tbody) {
-      tbody.innerHTML = (students && students.length > 0)
-        ? students.map(s => `
-          <tr><td>${s.name}</td><td>${s.program || 'BSN'}</td><td>${s.students?.[0]?.year || 'N/A'}</td><td><span class="status-badge scheduled">Active</span></td></tr>
-        `).join('')
-        : '<tr><td colspan="4">No students assigned</td></tr>';
-    }
+    tbody.innerHTML = (students && students.length > 0)
+      ? students.map(s => `
+        <tr><td>${s.name}</td><td>${s.program || 'BSN'}</td><td>${s.students?.[0]?.year || 'N/A'}</td><td><span class="status-badge scheduled">Active</span></td></tr>
+      `).join('')
+      : '<tr><td colspan="4">No students assigned</td></tr>';
+
+    hideLoading('ciStudentsTable');
+    showToast('CI dashboard loaded', 'success', 2000);
   } catch (err) {
     console.error('CI dashboard error:', err);
+    hideLoading('ciStudentsTable');
+    showToast('Error loading CI data: ' + err.message, 'error');
   }
 }
 
-// ------ Admin dashboard (reuses scheduler stats) ------
-export async function initAdminDashboard() {
+// ------ Admin Analytics ------
+export async function initAdminAnalytics() {
   const user = requireAuth();
-  if (!user) return;
-  // Set the admin name using the admin-specific element
-  const adminNameEl = document.getElementById('adminName');
-  if (adminNameEl) adminNameEl.textContent = user.name;
+  if (!user || user.role !== 'admin') return;
 
-  // Reuse the scheduler dashboard logic
-  await initSchedulerDashboard();
-  // Override the header title
-  const header = document.querySelector('.page-header h1');
-  if (header) header.textContent = '🏛️ Admin Dashboard';
+  document.getElementById('adminName').textContent = user.name;
+
+  // We'll show loading on the first table container
+  const firstContainer = document.getElementById('lackingCases');
+  try {
+    showLoading('lackingCases', 'Loading analytics...');
+
+    const students = await getStudentProgressSummary();
+
+    // Populate stats
+    document.getElementById('statStudents').textContent = students.length;
+    const slots = await getAvailableSlots();
+    document.getElementById('statSlots').textContent = slots.length;
+    const allSched = await getAllSchedules();
+    document.getElementById('statSched').textContent = allSched.length;
+    document.getElementById('statCompleted').textContent = allSched.filter(s => s.status === 'completed').length;
+
+    // Lacking cases
+    const lacking = students.filter(s => s.percentage < 100);
+    const lackingContainer = document.getElementById('lackingCases');
+    lackingContainer.innerHTML = lacking.map(s => `
+      <tr><td>${s.name}</td><td>${s.program}</td><td>${s.completed}/${s.total}</td><td>${s.percentage}%</td></tr>
+    `).join('') || '<tr><td colspan="4">All students have completed all cases.</td></tr>';
+
+    // Nearing completion
+    const nearing = students.filter(s => s.percentage >= 80 && s.percentage < 100);
+    const nearingContainer = document.getElementById('nearingCompletion');
+    nearingContainer.innerHTML = nearing.map(s => `
+      <tr><td>${s.name}</td><td>${s.program}</td><td>${s.completed}/${s.total}</td><td>${s.percentage}%</td></tr>
+    `).join('') || '<tr><td colspan="4">No students nearing completion.</td></tr>';
+
+    // Excessive absences
+    const excessive = students.filter(s => s.absences > 2);
+    const absContainer = document.getElementById('excessiveAbsences');
+    absContainer.innerHTML = excessive.map(s => `
+      <tr><td>${s.name}</td><td>${s.program}</td><td>${s.absences}</td></tr>
+    `).join('') || '<tr><td colspan="3">No students with excessive absences.</td></tr>';
+
+    // Open opportunities per hospital
+    const hospitalCount = {};
+    slots.forEach(s => { hospitalCount[s.hospital] = (hospitalCount[s.hospital] || 0) + 1; });
+    const sortedHospitals = Object.entries(hospitalCount).sort((a,b) => b[1] - a[1]);
+    const hospContainer = document.getElementById('openOpportunities');
+    hospContainer.innerHTML = sortedHospitals.map(([hospital, count]) => `
+      <tr><td>${hospital}</td><td>${count}</td></tr>
+    `).join('') || '<tr><td colspan="2">No open opportunities.</td></tr>';
+
+    // Upcoming duties (next 7 days)
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+    const { data: upcoming, error } = await supabase
+      .from('schedules')
+      .select('*, users(name)')
+      .gte('date', today.toISOString().split('T')[0])
+      .lte('date', nextWeek.toISOString().split('T')[0])
+      .eq('status', 'scheduled');
+    const upcomingContainer = document.getElementById('upcomingDuties');
+    upcomingContainer.innerHTML = (upcoming && upcoming.length) ? upcoming.map(s => `
+      <tr><td>${s.users?.name || 'Unknown'}</td><td>${s.date}</td><td>${s.hospital}</td><td>${s.case_type}</td></tr>
+    `).join('') : '<tr><td colspan="4">No upcoming duties.</td></tr>';
+
+    hideLoading('lackingCases');
+    showToast('Analytics loaded successfully', 'success', 2000);
+  } catch (err) {
+    console.error('Admin analytics error:', err);
+    hideLoading('lackingCases');
+    showToast('Error loading analytics: ' + err.message, 'error');
+  }
+}
+
+// ------ Opportunity Board (Student) ------
+export async function initOpportunityBoard() {
+  const user = requireAuth();
+  if (!user || user.role !== 'student') return;
+
+  const container = document.getElementById('opportunityContainer');
+  try {
+    showLoading('opportunityContainer', 'Loading available slots...');
+    const slots = await getAvailableSlots();
+    if (!slots || slots.length === 0) {
+      container.innerHTML = '<p>No open slots available at the moment.</p>';
+    } else {
+      container.innerHTML = slots.map(slot => `
+        <div class="opportunity-card">
+          <div class="slot-info">
+            <strong>${slot.case_type}</strong> @ ${slot.hospital} (${slot.date})
+          </div>
+          <div class="slot-actions">
+            <button class="claim-btn" data-slot-id="${slot.id}">Claim Now</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Attach claim events
+    container.querySelectorAll('.claim-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const slotId = btn.dataset.slotId;
+        try {
+          btn.disabled = true;
+          btn.textContent = 'Claiming...';
+          await claimSlot(slotId, user.id);
+          showToast('Slot claimed successfully!', 'success');
+          initOpportunityBoard(); // refresh
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = 'Claim Now';
+          showToast('Failed to claim slot: ' + err.message, 'error');
+        }
+      });
+    });
+    hideLoading('opportunityContainer');
+  } catch (err) {
+    console.error('Opportunity board error:', err);
+    hideLoading('opportunityContainer');
+    showToast('Error loading opportunities: ' + err.message, 'error');
+  }
+}
+
+// ------ Heatmap (Scheduler) ------
+export async function initHeatmap() {
+  const user = requireAuth();
+  if (!user || (user.role !== 'scheduler' && user.role !== 'admin')) return;
+
+  const container = document.getElementById('heatmapContainer');
+  try {
+    showLoading('heatmapContainer', 'Generating heatmap...');
+    const utilization = await getHospitalUtilization();
+
+    const caseTypes = new Set();
+    Object.values(utilization).forEach(hospital => {
+      Object.keys(hospital).forEach(caseType => caseTypes.add(caseType));
+    });
+    const caseList = Array.from(caseTypes).sort();
+
+    let html = '<table class="heatmap-table"><thead><tr><th>Hospital</th>';
+    caseList.forEach(c => { html += `<th>${c}</th>`; });
+    html += '</tr></thead><tbody>';
+
+    Object.entries(utilization).forEach(([hospital, cases]) => {
+      html += `<tr><td><strong>${hospital}</strong></td>`;
+      caseList.forEach(caseType => {
+        const data = cases[caseType] || { total: 0, completed: 0 };
+        const completion = data.total ? Math.round((data.completed / data.total) * 100) : 0;
+        const color = completion >= 80 ? '#dcfce7' :
+                      completion >= 50 ? '#fef9c3' :
+                      completion >= 20 ? '#fed7aa' : '#fecaca';
+        html += `<td style="background-color:${color}; text-align:center; padding:6px;">
+          ${data.total} (${completion}%)
+        </td>`;
+      });
+      html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+    hideLoading('heatmapContainer');
+  } catch (err) {
+    console.error('Heatmap error:', err);
+    hideLoading('heatmapContainer');
+    showToast('Error loading heatmap: ' + err.message, 'error');
+  }
+}
+
+// ------ Send Announcement (Scheduler/CI/Admin) ------
+export function initSendAnnouncement() {
+  const user = requireAuth();
+  if (!user || (user.role !== 'scheduler' && user.role !== 'ci' && user.role !== 'admin')) return;
+
+  const form = document.getElementById('announcementForm');
+  if (!form) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = document.getElementById('announcementMessage').value;
+    if (!message) {
+      showToast('Please enter a message.', 'warning');
+      return;
+    }
+    const submitBtn = form.querySelector('button[type="submit"]');
+    try {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+      const count = await sendAnnouncement(message, user.id, 'student');
+      showToast(`Announcement sent to ${count} students.`, 'success');
+      form.reset();
+    } catch (err) {
+      showToast('Failed to send announcement: ' + err.message, 'error');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Broadcast to Students';
+    }
+  });
+}
+
+// ------ Absence Marking (CI) ------
+export async function initAbsenceMarking() {
+  const user = requireAuth();
+  if (!user || user.role !== 'ci') return;
+
+  const container = document.getElementById('ciDutiesTable');
+  try {
+    showLoading('ciDutiesTable', 'Loading duties...');
+    const { data: schedules, error } = await supabase
+      .from('schedules')
+      .select('*, users(name)')
+      .eq('status', 'scheduled')
+      .gte('date', new Date().toISOString().split('T')[0]);
+    if (error) throw error;
+
+    container.innerHTML = (schedules && schedules.length) ? schedules.map(s => `
+      <tr>
+        <td>${s.users?.name || 'Unknown'}</td>
+        <td>${s.date}</td>
+        <td>${s.hospital}</td>
+        <td>${s.case_type}</td>
+        <td>
+          <button class="absent-btn" data-schedule-id="${s.id}" data-student-id="${s.student_id}">Mark Absent</button>
+        </td>
+      </tr>
+    `).join('') : '<tr><td colspan="5">No upcoming duties.</td></tr>';
+
+    container.querySelectorAll('.absent-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const scheduleId = btn.dataset.scheduleId;
+        const studentId = btn.dataset.studentId;
+        if (confirm('Mark this student as absent? A make‑up duty will be created.')) {
+          try {
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+            await markAbsent(scheduleId, studentId);
+            showToast('Student marked absent. Make‑up duty queued.', 'success');
+            initAbsenceMarking();
+          } catch (err) {
+            btn.disabled = false;
+            btn.textContent = 'Mark Absent';
+            showToast('Error: ' + err.message, 'error');
+          }
+        }
+      });
+    });
+    hideLoading('ciDutiesTable');
+  } catch (err) {
+    console.error('Absence marking error:', err);
+    hideLoading('ciDutiesTable');
+    showToast('Error loading duties: ' + err.message, 'error');
+  }
 }
 
 // ------ Case Passport ------
 export async function initCasePassport() {
   const user = requireAuth();
   if (!user || user.role !== 'student') return;
-  const progress = await getProgress(user.id);
+
   const list = document.getElementById('caseList');
-  list.innerHTML = progress.cases.map(c => `
-    <div class="case-item">
-      <span class="case-name">${c.name}</span>
-      <span class="case-status">
-        ${c.completed ? `<span class="done"><i class="fas fa-check-circle"></i> Verified by ${c.verifiedBy || 'CI'}</span>` 
-                       : `<span class="pending"><i class="fas fa-hourglass-half"></i> Pending</span>`}
-      </span>
-    </div>
-  `).join('');
+  try {
+    showLoading('caseList', 'Loading your cases...');
+    const progress = await getProgress(user.id);
+    list.innerHTML = progress.cases.map(c => `
+      <div class="case-item">
+        <span class="case-name">${c.name}</span>
+        <span class="case-status">
+          ${c.completed ? `<span class="done"><i class="fas fa-check-circle"></i> Verified by ${c.verifiedBy || 'CI'}</span>` 
+                         : `<span class="pending"><i class="fas fa-hourglass-half"></i> Pending</span>`}
+        </span>
+      </div>
+    `).join('');
+    hideLoading('caseList');
+  } catch (err) {
+    console.error('Case passport error:', err);
+    hideLoading('caseList');
+    showToast('Error loading cases: ' + err.message, 'error');
+  }
 }
 
-// ------ QR Attendance (enhanced with real QR generation) ------
+// ------ QR Attendance ------
 export function initQRAttendance() {
   const user = requireAuth();
   if (!user) return;
@@ -204,71 +461,107 @@ export function initQRAttendance() {
   </div>`;
   container.innerHTML = html;
 
-  // If student, generate a QR code (using a simple API or canvas)
-  // We'll use a free QR code API for demo
   window.scanQR = function() {
     if (role === 'student') {
       const qrDiv = document.getElementById('qrCodePlaceholder');
       const studentId = user.id;
-      // Use a free QR code API (Google Charts)
       qrDiv.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(studentId)}" alt="QR Code" style="width:200px;height:200px;border-radius:12px;" />`;
       document.getElementById('scanResult').innerHTML = `<span style="color:#166534;"><i class="fas fa-check-circle"></i> QR code generated. Show to CI for verification.</span>`;
+      showToast('QR code generated successfully', 'success', 2000);
     } else if (role === 'ci') {
-      // Simulate scanning – in real app, we'd open camera
       document.getElementById('scanResult').innerHTML = `<span style="color:#166534;"><i class="fas fa-check-circle"></i> Duty verified! Time-in: ${new Date().toLocaleTimeString()}</span>`;
-      // Optionally update a case as completed (for demo)
+      showToast('Duty verified! Time-in recorded.', 'success', 2000);
     }
   };
 }
 
-// ------ AI Matchmaker (with real student names) ------
+// ------ AI Matchmaker ------
 export async function initAIMatchmaker() {
   const user = requireAuth();
   if (!user || (user.role !== 'scheduler' && user.role !== 'admin')) return;
-  const slots = await getOpenSlots();
+
   const container = document.getElementById('matchContainer');
+  try {
+    showLoading('matchContainer', 'Loading AI recommendations...');
+    const slots = await getOpenSlots();
 
-  // Fetch student names for each slot's eligible_students
-  const slotsWithNames = await Promise.all(slots.map(async slot => {
-    if (!slot.eligible_students || slot.eligible_students.length === 0) {
-      return { ...slot, eligibleNames: 'No eligible students' };
-    }
-    const { data: users, error } = await supabase
-      .from('users')
-      .select('name')
-      .in('id', slot.eligible_students);
-    if (error) return { ...slot, eligibleNames: 'Error fetching' };
-    return { ...slot, eligibleNames: users.map(u => u.name).join(', ') };
-  }));
+    const slotsWithNames = await Promise.all(slots.map(async slot => {
+      if (!slot.eligible_students || slot.eligible_students.length === 0) {
+        return { ...slot, eligibleNames: 'No eligible students' };
+      }
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('name')
+        .in('id', slot.eligible_students);
+      if (error) return { ...slot, eligibleNames: 'Error fetching' };
+      return { ...slot, eligibleNames: users.map(u => u.name).join(', ') };
+    }));
 
-  container.innerHTML = slotsWithNames.map(slot => `
-    <div class="match-card">
-      <div class="slot-info"><strong>${slot.case_type}</strong> @ ${slot.hospital} (${slot.date})</div>
-      <div class="match-score"><i class="fas fa-star"></i> AI match: ${slot.eligibleNames}</div>
-      <button class="match-btn" onclick="alert('✅ Matched student to ${slot.case_type} duty')">Match</button>
-    </div>
-  `).join('') || '<p>No open slots for AI matching.</p>';
+    container.innerHTML = slotsWithNames.map(slot => `
+      <div class="match-card">
+        <div class="slot-info"><strong>${slot.case_type}</strong> @ ${slot.hospital} (${slot.date})</div>
+        <div class="match-score"><i class="fas fa-star"></i> AI match: ${slot.eligibleNames}</div>
+        <button class="match-btn" data-slot-id="${slot.id}">Match</button>
+      </div>
+    `).join('') || '<p>No open slots for AI matching.</p>';
+
+    container.querySelectorAll('.match-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        try {
+          btn.disabled = true;
+          btn.textContent = 'Matching...';
+          // In a real app, we would actually match the student
+          // For demo, we just show a success message
+          showToast('✅ Matched student to duty!', 'success');
+          btn.textContent = '✅ Matched';
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = 'Match';
+          showToast('Error: ' + err.message, 'error');
+        }
+      });
+    });
+    hideLoading('matchContainer');
+  } catch (err) {
+    console.error('AI Matchmaker error:', err);
+    hideLoading('matchContainer');
+    showToast('Error loading AI recommendations: ' + err.message, 'error');
+  }
 }
 
 // ------ Notifications ------
 export async function initNotifications() {
   const user = requireAuth();
   if (!user) return;
-  const notifs = await getNotifications(user.id);
+
   const container = document.getElementById('notifList');
-  container.innerHTML = notifs.map(n => `
-    <div class="notif-item ${n.read?'':'unread'}" onclick="window.markNotifRead(${n.id})">
-      <span class="notif-text">${n.message}</span>
-      <span class="notif-time">${new Date(n.created_at).toLocaleString()}</span>
-    </div>
-  `).join('') || '<p>No notifications</p>';
+  try {
+    showLoading('notifList', 'Loading notifications...');
+    const notifs = await getNotifications(user.id);
+    container.innerHTML = notifs.map(n => `
+      <div class="notif-item ${n.read?'':'unread'}" onclick="window.markNotifRead(${n.id})">
+        <span class="notif-text">${n.message}</span>
+        <span class="notif-time">${new Date(n.created_at).toLocaleString()}</span>
+      </div>
+    `).join('') || '<p>No notifications</p>';
+    hideLoading('notifList');
+  } catch (err) {
+    console.error('Notifications error:', err);
+    hideLoading('notifList');
+    showToast('Error loading notifications: ' + err.message, 'error');
+  }
+
   window.markNotifRead = async function(id) {
-    await markRead(id);
-    initNotifications();
+    try {
+      await markRead(id);
+      initNotifications();
+    } catch (err) {
+      showToast('Error marking as read: ' + err.message, 'error');
+    }
   };
 }
 
-// ------ Logout helper (exposed globally) ------
+// ------ Logout helper ------
 window.logoutUser = function() {
   logout();
 };
@@ -286,18 +579,35 @@ document.addEventListener('DOMContentLoaded', async () => {
       'case-passport.html': 'case-passport.html',
       'qr-attendance.html': 'qr-attendance.html',
       'ai-matchmaker.html': 'ai-matchmaker.html',
-      'notifications.html': 'notifications.html'
+      'notifications.html': 'notifications.html',
+      'opportunity-board.html': 'opportunity-board.html'
     };
     sidebarContainer.innerHTML = renderSidebar(activeMap[path] || '');
   }
 
-  // Initialize page
-  if (path === 'student-dashboard.html') await initStudentDashboard();
-  else if (path === 'scheduler-dashboard.html') await initSchedulerDashboard();
-  else if (path === 'ci-dashboard.html') await initCIDashboard();
-  else if (path === 'admin.html') await initAdminDashboard();
-  else if (path === 'case-passport.html') await initCasePassport();
-  else if (path === 'qr-attendance.html') initQRAttendance();
-  else if (path === 'ai-matchmaker.html') await initAIMatchmaker();
-  else if (path === 'notifications.html') await initNotifications();
+  // Page initialization
+  if (path === 'student-dashboard.html') {
+    await initStudentDashboard();
+  } else if (path === 'scheduler-dashboard.html') {
+    await initSchedulerDashboard();
+    await initHeatmap();
+    initSendAnnouncement();
+  } else if (path === 'ci-dashboard.html') {
+    await initCIDashboard();
+    await initAbsenceMarking();
+    initSendAnnouncement();
+  } else if (path === 'admin.html') {
+    await initAdminAnalytics();
+    initSendAnnouncement();
+  } else if (path === 'case-passport.html') {
+    await initCasePassport();
+  } else if (path === 'qr-attendance.html') {
+    initQRAttendance();
+  } else if (path === 'ai-matchmaker.html') {
+    await initAIMatchmaker();
+  } else if (path === 'notifications.html') {
+    await initNotifications();
+  } else if (path === 'opportunity-board.html') {
+    await initOpportunityBoard();
+  }
 });

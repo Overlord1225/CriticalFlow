@@ -12,24 +12,73 @@
   <div id="sidebarContainer"></div>
   <div class="main-content">
     <div class="page-header">
-      <h1>🏛️ Admin Dashboard</h1>
+      <h1>🏛️ Admin Analytics</h1>
       <div class="badge"><i class="fas fa-user-tie"></i> <span id="adminName">Admin</span></div>
     </div>
-    <!-- Reuse scheduler stats & table -->
+
+    <!-- Stats cards (fixed structure) -->
     <div class="card-grid">
-      <div class="stat-card"><span class="stat-icon"><i class="fas fa-users"></i></span><div class="stat-num" id="statStudents">0</div><div class="stat-label">Total Students</div></div>
-      <div class="stat-card"><span class="stat-icon"><i class="fas fa-door-open"></i></span><div class="stat-num" id="statSlots">0</div><div class="stat-label">Open Duty Slots</div></div>
-      <div class="stat-card"><span class="stat-icon"><i class="fas fa-calendar"></i></span><div class="stat-num" id="statSched">0</div><div class="stat-label">Total Schedules</div></div>
-      <div class="stat-card"><span class="stat-icon"><i class="fas fa-check-circle" style="color:#166534;"></i></span><div class="stat-num" id="statCompleted">0</div><div class="stat-label">Completed Duties</div></div>
+      <div class="stat-card">
+        <span class="stat-icon"><i class="fas fa-users"></i></span>
+        <div class="stat-num" id="statStudents">0</div>
+        <div class="stat-label">Total Students</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon"><i class="fas fa-door-open"></i></span>
+        <div class="stat-num" id="statSlots">0</div>
+        <div class="stat-label">Open Duty Slots</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon"><i class="fas fa-calendar"></i></span>
+        <div class="stat-num" id="statSched">0</div>
+        <div class="stat-label">Total Schedules</div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon"><i class="fas fa-check-circle" style="color:#166534;"></i></span>
+        <div class="stat-num" id="statCompleted">0</div>
+        <div class="stat-label">Completed Duties</div>
+      </div>
     </div>
+
+    <!-- Analytics tables -->
     <div class="table-wrap">
-      <h3 style="margin-bottom:12px;">📋 All Rotation Schedules</h3>
-      <table><thead><tr><th>Student</th><th>Date</th><th>Hospital</th><th>Case</th><th>Status</th></tr></thead><tbody id="allSchedTable"></tbody></table>
+      <h3>📋 Students Lacking Required Cases</h3>
+      <table><thead><tr><th>Name</th><th>Program</th><th>Completed</th><th>%</th></tr></thead><tbody id="lackingCases"></tbody></table>
+    </div>
+
+    <div class="table-wrap">
+      <h3>📈 Students Nearing Completion (≥80%)</h3>
+      <table><thead><tr><th>Name</th><th>Program</th><th>Completed</th><th>%</th></tr></thead><tbody id="nearingCompletion"></tbody></table>
+    </div>
+
+    <div class="table-wrap">
+      <h3>⚠️ Students with Excessive Absences (>2)</h3>
+      <table><thead><tr><th>Name</th><th>Program</th><th>Absences</th></tr></thead><tbody id="excessiveAbsences"></tbody></table>
+    </div>
+
+    <div class="table-wrap">
+      <h3>🏥 Hospitals with Most Open Opportunities</h3>
+      <table><thead><tr><th>Hospital</th><th>Open Slots</th></tr></thead><tbody id="openOpportunities"></tbody></table>
+    </div>
+
+    <div class="table-wrap">
+      <h3>📅 Upcoming Duties (Next 7 Days)</h3>
+      <table><thead><tr><th>Student</th><th>Date</th><th>Hospital</th><th>Case</th></tr></thead><tbody id="upcomingDuties"></tbody></table>
+    </div>
+
+    <!-- Announcement form -->
+    <div style="margin-top:32px; background:#fff; border-radius:20px; padding:24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+      <h3 style="margin-bottom:12px;">📢 Send Announcement</h3>
+      <form id="announcementForm">
+        <textarea id="announcementMessage" rows="3" placeholder="Type your announcement here..." style="width:100%; padding:12px; border-radius:12px; border:1px solid #e9edf2; font-family:inherit;"></textarea>
+        <button type="submit" style="background:#1a7a7a; color:#fff; padding:10px 24px; border-radius:40px; font-weight:600; margin-top:12px; border:none; cursor:pointer;">Broadcast to Students</button>
+      </form>
     </div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabaseClient.js" type="module"></script>
+<script src="js/utils.js" type="module"></script>
 <script src="js/data.js" type="module"></script>
 <script src="js/auth.js" type="module"></script>
 <script src="js/main.js" type="module"></script>

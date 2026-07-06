@@ -9,7 +9,6 @@ export async function signIn(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
 
-  // Fetch user role from public.users – use maybeSingle()
   const { data: userData, error: userError } = await supabase
     .from('users')
     .select('*')
@@ -25,18 +24,15 @@ export async function signIn(email, password) {
 }
 
 export async function signUp(email, password, role, name, program) {
-  // 1. Sign up user
   const { data, error } = await supabase.auth.signUp({ email, password });
   if (error) throw error;
   if (!data.user) throw new Error('Failed to create user account.');
 
-  // 2. Insert into public.users
   const { error: insertError } = await supabase
     .from('users')
     .insert([{ id: data.user.id, email, role, name, program }]);
   if (insertError) throw insertError;
 
-  // 3. If student, also insert into students table
   if (role === 'student') {
     const { error: studentError } = await supabase
       .from('students')
@@ -44,10 +40,8 @@ export async function signUp(email, password, role, name, program) {
     if (studentError) throw studentError;
   }
 
-  // 4. Auto sign-in (if email confirmation disabled)
   await supabase.auth.signInWithPassword({ email, password });
 
-  // 5. Fetch the newly created user profile
   const { data: userData, error: userError } = await supabase
     .from('users')
     .select('*')
@@ -81,7 +75,6 @@ export async function logout() {
 
 // ---- Data fetching functions ----
 export async function getStudent(id) {
-  // Use maybeSingle() to avoid error if no row
   const { data, error } = await supabase
     .from('students')
     .select('*, users(name, program)')
@@ -90,7 +83,6 @@ export async function getStudent(id) {
 
   if (error) throw error;
   if (!data) {
-    // If no student record, return a default object (or throw)
     return { id, name: 'Unknown', program: 'BSN', year: 1 };
   }
   return { ...data, name: data.users?.name || 'Unknown', program: data.users?.program || 'BSN' };
@@ -168,5 +160,170 @@ export async function getStudentsByIds(ids) {
   return data;
 }
 
-// Export supabase instance for other modules
+// ===== NEW FUNCTIONS =====
+
+// ----- Opportunity Board -----
+export async function getAvailableSlots() {
+  const { data, error } = await supabase
+    .from('open_slots')
+    .select('*')
+    .order('date');
+  if (error) throw error;
+  return data;
+}
+
+export async function claimSlot(slotId, studentId) {
+  // 1. Fetch the slot to get its details
+  const { data: slot, error: fetchError } = await supabase
+    .from('open_slots')
+    .select('*')
+    .eq('id', slotId)
+    .single();
+  if (fetchError) throw fetchError;
+  if (!slot) throw new Error('Slot not found');
+
+  // 2. Create a schedule entry for the student
+  const { error: insertError } = await supabase
+    .from('schedules')
+    .insert([{
+      student_id: studentId,
+      date: slot.date,
+      hospital: slot.hospital,
+      case_type: slot.case_type,
+      status: 'scheduled'
+    }]);
+  if (insertError) throw insertError;
+
+  // 3. Remove the slot from open_slots
+  const { error: deleteError } = await supabase
+    .from('open_slots')
+    .delete()
+    .eq('id', slotId);
+  if (deleteError) throw deleteError;
+
+  // 4. Notify the student
+  await supabase
+    .from('notifications')
+    .insert([{
+      user_id: studentId,
+      message: `You have claimed a duty slot: ${slot.case_type} at ${slot.hospital} on ${slot.date}`
+    }]);
+
+  return true;
+}
+
+// ----- Announcements -----
+export async function sendAnnouncement(message, senderId, targetRole = 'student') {
+  const { data: users, error } = await supabase
+    .from('users')
+    .select('id')
+    .eq('role', targetRole);
+  if (error) throw error;
+
+  const notifications = users.map(user => ({
+    user_id: user.id,
+    message: message,
+    read: false,
+    created_at: new Date().toISOString()
+  }));
+
+  const { error: insertError } = await supabase
+    .from('notifications')
+    .insert(notifications);
+  if (insertError) throw insertError;
+
+  return notifications.length;
+}
+
+// ----- Absence Management -----
+export async function markAbsent(scheduleId, studentId) {
+  // 1. Update schedule status to 'absent'
+  const { error: updateError } = await supabase
+    .from('schedules')
+    .update({ status: 'absent' })
+    .eq('id', scheduleId);
+  if (updateError) throw updateError;
+
+  // 2. Fetch the schedule details to create a make-up slot
+  const { data: schedule, error: fetchError } = await supabase
+    .from('schedules')
+    .select('*')
+    .eq('id', scheduleId)
+    .single();
+  if (fetchError) throw fetchError;
+
+  // 3. Create a make-up open slot for the student
+  const { error: insertError } = await supabase
+    .from('open_slots')
+    .insert([{
+      hospital: schedule.hospital,
+      case_type: schedule.case_type,
+      date: schedule.date, // you might want to add +7 days in a real app
+      eligible_students: [studentId]
+    }]);
+  if (insertError) throw insertError;
+
+  // 4. Notify student
+  await supabase
+    .from('notifications')
+    .insert([{
+      user_id: studentId,
+      message: `You were marked absent for ${schedule.case_type} at ${schedule.hospital} on ${schedule.date}. A make‑up duty has been queued.`
+    }]);
+
+  return true;
+}
+
+// ----- Analytics -----
+export async function getStudentProgressSummary() {
+  const { data: students, error } = await supabase
+    .from('users')
+    .select('id, name, program')
+    .eq('role', 'student');
+  if (error) throw error;
+
+  const result = await Promise.all(students.map(async (student) => {
+    const progress = await getProgress(student.id);
+    const total = progress.cases.length;
+    const completed = progress.cases.filter(c => c.completed).length;
+    return {
+      ...student,
+      total,
+      completed,
+      percentage: total ? Math.round((completed / total) * 100) : 0
+    };
+  }));
+
+  // Count absences per student
+  const { data: absences, error: absError } = await supabase
+    .from('schedules')
+    .select('student_id')
+    .eq('status', 'absent');
+  if (!absError) {
+    const absenceCount = {};
+    absences.forEach(a => { absenceCount[a.student_id] = (absenceCount[a.student_id] || 0) + 1; });
+    result.forEach(s => s.absences = absenceCount[s.id] || 0);
+  }
+
+  return result;
+}
+
+export async function getHospitalUtilization() {
+  const { data, error } = await supabase
+    .from('schedules')
+    .select('hospital, case_type, status');
+  if (error) throw error;
+
+  const utilization = {};
+  data.forEach(row => {
+    if (!utilization[row.hospital]) utilization[row.hospital] = {};
+    if (!utilization[row.hospital][row.case_type]) {
+      utilization[row.hospital][row.case_type] = { total: 0, completed: 0 };
+    }
+    utilization[row.hospital][row.case_type].total++;
+    if (row.status === 'completed') utilization[row.hospital][row.case_type].completed++;
+  });
+  return utilization;
+}
+
 export { supabase };

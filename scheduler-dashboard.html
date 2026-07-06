@@ -6,6 +6,22 @@
   <title>Scheduler Dashboard · ClinicalFlow</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .heatmap-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .heatmap-table th, .heatmap-table td {
+      padding: 8px 12px;
+      border: 1px solid #e9edf2;
+      text-align: center;
+    }
+    .heatmap-table th {
+      background: #f8fafc;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
 <div class="app-layout">
@@ -25,10 +41,28 @@
       <h3 style="margin-bottom:12px;">📋 All Rotation Schedules</h3>
       <table><thead><tr><th>Student</th><th>Date</th><th>Hospital</th><th>Case</th><th>Status</th></tr></thead><tbody id="allSchedTable"></tbody></table>
     </div>
+
+    <!-- NEW: Heatmap -->
+    <div style="margin-top:32px;">
+      <h3 style="margin-bottom:12px;">🔥 Rotation Heatmap</h3>
+      <div id="heatmapContainer" class="table-wrap" style="padding:16px;">
+        <!-- heatmap will be rendered here -->
+      </div>
+    </div>
+
+    <!-- NEW: Announcement Form -->
+    <div style="margin-top:32px; background:#fff; border-radius:20px; padding:24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+      <h3 style="margin-bottom:12px;">📢 Send Announcement</h3>
+      <form id="announcementForm">
+        <textarea id="announcementMessage" rows="3" placeholder="Type your announcement here..." style="width:100%; padding:12px; border-radius:12px; border:1px solid #e9edf2; font-family:inherit;"></textarea>
+        <button type="submit" style="background:#1a7a7a; color:#fff; padding:10px 24px; border-radius:40px; font-weight:600; margin-top:12px; border:none; cursor:pointer;">Broadcast to Students</button>
+      </form>
+    </div>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabaseClient.js" type="module"></script>
+<script src="js/utils.js" type="module"></script>
 <script src="js/data.js" type="module"></script>
 <script src="js/auth.js" type="module"></script>
 <script src="js/main.js" type="module"></script>
