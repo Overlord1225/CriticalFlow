@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClinicalFlow · Login</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-card">
+      <div class="logo"><i class="fas fa-heartbeat"></i> Clinical<span>Flow</span></div>
+      <p class="sub">Smart Clinical Rotation Management</p>
+      <h2>Sign in</h2>
+      <div style="text-align:left; margin-bottom:16px;">
+        <label>Email</label>
+        <input type="email" id="emailInput" placeholder="your@email.com" style="width:100%; padding:10px; border-radius:12px; border:1px solid #e9edf2; margin-top:4px;" />
+        <label style="margin-top:12px; display:block;">Password</label>
+        <input type="password" id="passwordInput" placeholder="••••••••" style="width:100%; padding:10px; border-radius:12px; border:1px solid #e9edf2; margin-top:4px;" />
+      </div>
+      <div id="loginError" class="login-error" style="display:none;"></div>
+      <button id="loginBtn" class="login-action-btn">Sign In <i class="fas fa-arrow-right"></i></button>
+      <p style="margin-top:16px; font-size:13px; color:#64748b;">
+        Don't have an account? <a href="signup.html" style="color:#1a7a7a; font-weight:600;">Create account</a>
+      </p>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js" type="module"></script>
+  <script src="js/data.js" type="module"></script>
+  <script src="js/auth.js" type="module"></script>
+  <script src="js/main.js" type="module"></script>
+  <script type="module">
+    import { signIn } from './js/data.js';
+    // Login
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const email = document.getElementById('emailInput').value;
+      const password = document.getElementById('passwordInput').value;
+      if (!email || !password) {
+        document.getElementById('loginError').textContent = 'Please enter email and password.';
+        document.getElementById('loginError').style.display = 'block';
+        return;
+      }
+      try {
+        const user = await signIn(email, password);
+        if (!user) throw new Error('Login failed');
+        const map = {
+          student: 'student-dashboard.html',
+          scheduler: 'scheduler-dashboard.html',
+          ci: 'ci-dashboard.html',
+          admin: 'admin.html'
+        };
+        window.location.href = map[user.role];
+      } catch (err) {
+        console.error('Login error:', err);
+        document.getElementById('loginError').textContent = err.message || 'Invalid credentials.';
+        document.getElementById('loginError').style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

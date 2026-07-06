@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard · ClinicalFlow</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebarContainer"></div>
+  <div class="main-content">
+    <div class="page-header">
+      <h1>👋 Welcome, <span id="studentName"></span></h1>
+      <div class="badge"><i class="fas fa-graduation-cap"></i> <span id="studentProgram">BSN</span></div>
+    </div>
+
+    <div class="card-grid">
+      <div class="stat-card"><span class="stat-icon"><i class="fas fa-clipboard-list"></i></span><div class="stat-num" id="totalCases">0</div><div class="stat-label">Total Required Cases</div></div>
+      <div class="stat-card"><span class="stat-icon"><i class="fas fa-check-circle" style="color:#166534;"></i></span><div class="stat-num" id="completedCases">0</div><div class="stat-label">Completed</div></div>
+      <div class="stat-card"><span class="stat-icon"><i class="fas fa-hourglass-half" style="color:#b45309;"></i></span><div class="stat-num" id="pendingCases">0</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card"><span class="stat-icon"><i class="fas fa-bell"></i></span><div class="stat-num" id="unreadBadge">0</div><div class="stat-label">Unread Notifications</div></div>
+    </div>
+
+    <div class="table-wrap">
+      <h3 style="margin-bottom:12px;">📅 Upcoming Duties</h3>
+      <table><thead><tr><th>Date</th><th>Hospital</th><th>Case</th><th>Status</th></tr></thead><tbody id="upcomingTable"></tbody></table>
+    </div>
+
+    <div>
+      <h3 style="margin-bottom:12px;">🔔 Recent Notifications</h3>
+      <div id="recentNotifs"></div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabaseClient.js" type="module"></script>
+<script src="js/data.js" type="module"></script>
+<script src="js/auth.js" type="module"></script>
+<script src="js/main.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scheduler Dashboard · ClinicalFlow</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+<div class="app-layout">
+  <div id="sidebarContainer"></div>
+  <div class="main-content">
+    <div class="page-header">
+      <h1>📊 Scheduler Dashboard</h1>
+      <div class="badge"><i class="fas fa-user-cog"></i> <span id="schName">Coordinator</span></div>
+    </div>
+    <div class="card-grid">
+      <div class="stat-card"><span class="stat-icon"><i class="fas fa-users"></i></span><div class="stat-num" id="statStudents">0</div><div class="stat-label">Total Students</div></div>
+      <div class="stat-card"><span class="stat-icon"><i class="fas fa-door-open"></i></span><div class="stat-num" id="statSlots">0</div><div class="stat-label">Open Duty Slots</div></div>
+      <div class="stat-card"><span class="stat-icon"><i class="fas fa-calendar"></i></span><div class="stat-num" id="statSched">0</div><div class="stat-label">Total Schedules</div></div>
+      <div class="stat-card"><span class="stat-icon"><i class="fas fa-check-circle" style="color:#166534;"></i></span><div class="stat-num" id="statCompleted">0</div><div class="stat-label">Completed Duties</div></div>
+    </div>
+    <div class="table-wrap">
+      <h3 style="margin-bottom:12px;">📋 All Rotation Schedules</h3>
+      <table><thead><tr><th>Student</th><th>Date</th><th>Hospital</th><th>Case</th><th>Status</th></tr></thead><tbody id="allSchedTable"></tbody></table>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabaseClient.js" type="module"></script>
+<script src="js/data.js" type="module"></script>
+<script src="js/auth.js" type="module"></script>
+<script src="js/main.js" type="module"></script>
+</body>
+</html>
