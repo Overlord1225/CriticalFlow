@@ -8,22 +8,23 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-<div class="app-layout">
-  <div id="sidebarContainer"></div>
-  <div class="main-content">
-    <div class="page-header">
-      <h1><i class="fas fa-passport" style="color:#1a7a7a;"></i> Case Passport</h1>
-      <div class="badge">Verified by CI</div>
-    </div>
-    <p style="margin-bottom:20px; color:#475569;">Track required clinical cases and verification status.</p>
-    <div id="caseList" class="case-list"></div>
+  <div class="app-layout">
+    <header id="sidebarContainer"></header>
+    <main class="main-content">
+      <header class="page-header">
+        <h1><i class="fas fa-passport" style="color:#1a7a7a;"></i> Case Passport</h1>
+        <div class="badge">Verified by CI</div>
+      </header>
+      <p style="margin-bottom:20px; color:#475569;">Track required clinical cases and verification status.</p>
+      <section id="caseList" class="case-list"></section>
+    </main>
   </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabaseClient.js" type="module"></script>
-<script src="js/utils.js" type="module"></script>
-<script src="js/data.js" type="module"></script>
-<script src="js/auth.js" type="module"></script>
-<script src="js/main.js" type="module"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js" type="module"></script>
+  <script src="js/utils.js" type="module"></script>
+  <script src="js/data.js" type="module"></script>
+  <script src="js/auth.js" type="module"></script>
+  <script src="js/main.js" type="module"></script>
 </body>
 </html>

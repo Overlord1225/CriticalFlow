@@ -8,37 +8,38 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-<div class="app-layout">
-  <div id="sidebarContainer"></div>
-  <div class="main-content">
-    <div class="page-header">
-      <h1>👋 Welcome, <span id="studentName"></span></h1>
-      <div class="badge"><i class="fas fa-graduation-cap"></i> <span id="studentProgram">BSN</span></div>
-    </div>
+  <div class="app-layout">
+    <header id="sidebarContainer"></header>
+    <main class="main-content">
+      <header class="page-header">
+        <h1>👋 Welcome, <span id="studentName"></span></h1>
+        <div class="badge"><i class="fas fa-graduation-cap"></i> <span id="studentProgram">BSN</span></div>
+      </header>
 
-    <div class="card-grid">
-      <div class="stat-card"><span class="stat-icon"><i class="fas fa-clipboard-list"></i></span><div class="stat-num" id="totalCases">0</div><div class="stat-label">Total Required Cases</div></div>
-      <div class="stat-card"><span class="stat-icon"><i class="fas fa-check-circle" style="color:#166534;"></i></span><div class="stat-num" id="completedCases">0</div><div class="stat-label">Completed</div></div>
-      <div class="stat-card"><span class="stat-icon"><i class="fas fa-hourglass-half" style="color:#b45309;"></i></span><div class="stat-num" id="pendingCases">0</div><div class="stat-label">Pending</div></div>
-      <div class="stat-card"><span class="stat-icon"><i class="fas fa-bell"></i></span><div class="stat-num" id="unreadBadge">0</div><div class="stat-label">Unread Notifications</div></div>
-    </div>
+      <section class="card-grid">
+        <div class="stat-card"><span class="stat-icon"><i class="fas fa-clipboard-list"></i></span><div class="stat-num" id="totalCases">0</div><div class="stat-label">Total Required Cases</div></div>
+        <div class="stat-card"><span class="stat-icon"><i class="fas fa-check-circle" style="color:#166534;"></i></span><div class="stat-num" id="completedCases">0</div><div class="stat-label">Completed</div></div>
+        <div class="stat-card"><span class="stat-icon"><i class="fas fa-hourglass-half" style="color:#b45309;"></i></span><div class="stat-num" id="pendingCases">0</div><div class="stat-label">Pending</div></div>
+        <div class="stat-card"><span class="stat-icon"><i class="fas fa-bell"></i></span><div class="stat-num" id="unreadBadge">0</div><div class="stat-label">Unread Notifications</div></div>
+      </section>
 
-    <div class="table-wrap">
-      <h3 style="margin-bottom:12px;">📅 Upcoming Duties</h3>
-      <table><thead><tr><th>Date</th><th>Hospital</th><th>Case</th><th>Status</th></tr></thead><tbody id="upcomingTable"></tbody></table>
-    </div>
+      <section class="table-wrap">
+        <h3>📅 Upcoming Duties</h3>
+        <table><thead><tr><th>Date</th><th>Hospital</th><th>Case</th><th>Status</th></tr></thead><tbody id="upcomingTable"></tbody></table>
+      </section>
 
-    <div>
-      <h3 style="margin-bottom:12px;">🔔 Recent Notifications</h3>
-      <div id="recentNotifs"></div>
-    </div>
+      <section>
+        <h3>🔔 Recent Notifications</h3>
+        <div id="recentNotifs"></div>
+      </section>
+    </main>
   </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabaseClient.js" type="module"></script>
-<script src="js/utils.js" type="module"></script>
-<script src="js/data.js" type="module"></script>
-<script src="js/auth.js" type="module"></script>
-<script src="js/main.js" type="module"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js" type="module"></script>
+  <script src="js/utils.js" type="module"></script>
+  <script src="js/data.js" type="module"></script>
+  <script src="js/auth.js" type="module"></script>
+  <script src="js/main.js" type="module"></script>
 </body>
 </html>

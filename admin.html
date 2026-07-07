@@ -8,79 +8,146 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-<div class="app-layout">
-  <div id="sidebarContainer"></div>
-  <div class="main-content">
-    <div class="page-header">
-      <h1>🏛️ Admin Analytics</h1>
-      <div class="badge"><i class="fas fa-user-tie"></i> <span id="adminName">Admin</span></div>
-    </div>
+  <div class="app-layout">
+    <header id="sidebarContainer"></header>
+    <main class="main-content">
+      <header class="page-header">
+        <h1>🏛️ Admin Dashboard</h1>
+        <div class="badge"><i class="fas fa-user-tie"></i> <span id="adminName">Admin</span></div>
+      </header>
 
-    <!-- Stats cards (fixed structure) -->
-    <div class="card-grid">
-      <div class="stat-card">
-        <span class="stat-icon"><i class="fas fa-users"></i></span>
-        <div class="stat-num" id="statStudents">0</div>
-        <div class="stat-label">Total Students</div>
-      </div>
-      <div class="stat-card">
-        <span class="stat-icon"><i class="fas fa-door-open"></i></span>
-        <div class="stat-num" id="statSlots">0</div>
-        <div class="stat-label">Open Duty Slots</div>
-      </div>
-      <div class="stat-card">
-        <span class="stat-icon"><i class="fas fa-calendar"></i></span>
-        <div class="stat-num" id="statSched">0</div>
-        <div class="stat-label">Total Schedules</div>
-      </div>
-      <div class="stat-card">
-        <span class="stat-icon"><i class="fas fa-check-circle" style="color:#166534;"></i></span>
-        <div class="stat-num" id="statCompleted">0</div>
-        <div class="stat-label">Completed Duties</div>
-      </div>
-    </div>
+      <nav class="admin-tabs">
+        <button class="active" data-tab="analytics">📊 Analytics</button>
+        <button data-tab="hospitals">🏥 Hospitals</button>
+        <button data-tab="departments">🏢 Departments</button>
+        <button data-tab="cases">📚 Case Library</button>
+        <button data-tab="users">👤 Users</button>
+      </nav>
 
-    <!-- Analytics tables -->
-    <div class="table-wrap">
-      <h3>📋 Students Lacking Required Cases</h3>
-      <table><thead><tr><th>Name</th><th>Program</th><th>Completed</th><th>%</th></tr></thead><tbody id="lackingCases"></tbody></table>
-    </div>
+      <!-- Analytics Tab -->
+      <section id="tab-analytics" class="tab-content active">
+        <div class="card-grid">
+          <div class="stat-card"><span class="stat-icon"><i class="fas fa-users"></i></span><div class="stat-num" id="statStudents">0</div><div class="stat-label">Total Students</div></div>
+          <div class="stat-card"><span class="stat-icon"><i class="fas fa-door-open"></i></span><div class="stat-num" id="statSlots">0</div><div class="stat-label">Open Duty Slots</div></div>
+          <div class="stat-card"><span class="stat-icon"><i class="fas fa-calendar"></i></span><div class="stat-num" id="statSched">0</div><div class="stat-label">Total Schedules</div></div>
+          <div class="stat-card"><span class="stat-icon"><i class="fas fa-check-circle" style="color:#166534;"></i></span><div class="stat-num" id="statCompleted">0</div><div class="stat-label">Completed Duties</div></div>
+        </div>
 
-    <div class="table-wrap">
-      <h3>📈 Students Nearing Completion (≥80%)</h3>
-      <table><thead><tr><th>Name</th><th>Program</th><th>Completed</th><th>%</th></tr></thead><tbody id="nearingCompletion"></tbody></table>
-    </div>
+        <div class="table-wrap">
+          <h3>📋 Students Lacking Required Cases</h3>
+          <table><thead><tr><th>Name</th><th>Program</th><th>Completed</th><th>%</th></tr></thead><tbody id="lackingCases"></tbody></table>
+        </div>
+        <div class="table-wrap">
+          <h3>📈 Students Nearing Completion (≥80%)</h3>
+          <table><thead><tr><th>Name</th><th>Program</th><th>Completed</th><th>%</th></tr></thead><tbody id="nearingCompletion"></tbody></table>
+        </div>
+        <div class="table-wrap">
+          <h3>⚠️ Students with Excessive Absences (>2)</h3>
+          <table><thead><tr><th>Name</th><th>Program</th><th>Absences</th></tr></thead><tbody id="excessiveAbsences"></tbody></table>
+        </div>
+        <div class="table-wrap">
+          <h3>🏥 Hospitals with Most Open Opportunities</h3>
+          <table><thead><tr><th>Hospital</th><th>Open Slots</th></tr></thead><tbody id="openOpportunities"></tbody></table>
+        </div>
+        <div class="table-wrap">
+          <h3>📅 Upcoming Duties (Next 7 Days)</h3>
+          <table><thead><tr><th>Student</th><th>Date</th><th>Hospital</th><th>Case</th></tr></thead><tbody id="upcomingDuties"></tbody></table>
+        </div>
 
-    <div class="table-wrap">
-      <h3>⚠️ Students with Excessive Absences (>2)</h3>
-      <table><thead><tr><th>Name</th><th>Program</th><th>Absences</th></tr></thead><tbody id="excessiveAbsences"></tbody></table>
-    </div>
+        <section style="margin-top:32px; background:#fff; border-radius:20px; padding:24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+          <h3>📢 Send Announcement</h3>
+          <form id="announcementForm">
+            <textarea id="announcementMessage" rows="3" placeholder="Type your announcement here..." style="width:100%; padding:12px; border-radius:12px; border:1px solid #e9edf2; font-family:inherit;"></textarea>
+            <button type="submit" class="btn-primary" style="margin-top:12px;">Broadcast to Students</button>
+          </form>
+        </section>
+      </section>
 
-    <div class="table-wrap">
-      <h3>🏥 Hospitals with Most Open Opportunities</h3>
-      <table><thead><tr><th>Hospital</th><th>Open Slots</th></tr></thead><tbody id="openOpportunities"></tbody></table>
-    </div>
+      <!-- Hospitals Tab -->
+      <section id="tab-hospitals" class="tab-content">
+        <h3>🏥 Manage Hospitals</h3>
+        <div class="management-form" id="hospitalForm">
+          <div><label>Hospital Name *</label><input type="text" id="hospitalName" placeholder="e.g., St. Luke's BGC"></div>
+          <div><label>Address</label><input type="text" id="hospitalAddress" placeholder="Street, City"></div>
+          <div><label>Latitude *</label><input type="number" step="any" id="hospitalLat" placeholder="14.5443"></div>
+          <div><label>Longitude *</label><input type="number" step="any" id="hospitalLng" placeholder="121.0492"></div>
+          <div><label>Attendance Radius (meters)</label><input type="number" id="hospitalRadius" placeholder="100" value="100"></div>
+          <div style="display:flex; align-items:end; gap:8px;">
+            <button class="btn-primary" id="saveHospitalBtn">Add Hospital</button>
+            <button class="btn-secondary" id="cancelHospitalBtn" style="display:none;">Cancel</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Name</th><th>Address</th><th>Lat</th><th>Lng</th><th>Radius</th><th>Actions</th></tr></thead><tbody id="hospitalTableBody"></tbody></table>
+        </div>
+      </section>
 
-    <div class="table-wrap">
-      <h3>📅 Upcoming Duties (Next 7 Days)</h3>
-      <table><thead><tr><th>Student</th><th>Date</th><th>Hospital</th><th>Case</th></tr></thead><tbody id="upcomingDuties"></tbody></table>
-    </div>
+      <!-- Departments Tab -->
+      <section id="tab-departments" class="tab-content">
+        <h3>🏢 Manage Departments</h3>
+        <div class="management-form" id="departmentForm">
+          <div><label>Department Name *</label><input type="text" id="deptName" placeholder="e.g., Delivery Room"></div>
+          <div><label>Hospital *</label><select id="deptHospital"></select></div>
+          <div style="display:flex; align-items:end; gap:8px;">
+            <button class="btn-primary" id="saveDeptBtn">Add Department</button>
+            <button class="btn-secondary" id="cancelDeptBtn" style="display:none;">Cancel</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Name</th><th>Hospital</th><th>Actions</th></tr></thead><tbody id="deptTableBody"></tbody></table>
+        </div>
+      </section>
 
-    <!-- Announcement form -->
-    <div style="margin-top:32px; background:#fff; border-radius:20px; padding:24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-      <h3 style="margin-bottom:12px;">📢 Send Announcement</h3>
-      <form id="announcementForm">
-        <textarea id="announcementMessage" rows="3" placeholder="Type your announcement here..." style="width:100%; padding:12px; border-radius:12px; border:1px solid #e9edf2; font-family:inherit;"></textarea>
-        <button type="submit" style="background:#1a7a7a; color:#fff; padding:10px 24px; border-radius:40px; font-weight:600; margin-top:12px; border:none; cursor:pointer;">Broadcast to Students</button>
-      </form>
-    </div>
+      <!-- Case Library Tab -->
+      <section id="tab-cases" class="tab-content">
+        <h3>📚 Manage Case Library</h3>
+        <div class="management-form" id="caseForm">
+          <div><label>Case Name *</label><input type="text" id="caseName" placeholder="e.g., Normal Spontaneous Delivery"></div>
+          <div><label>Description</label><input type="text" id="caseDesc" placeholder="Brief description"></div>
+          <div><label>Category</label><input type="text" id="caseCategory" placeholder="e.g., OB, Pediatrics"></div>
+          <div><label>Required Minimum *</label><input type="number" id="caseRequired" placeholder="5" value="1"></div>
+          <div><label>Program</label><input type="text" id="caseProgram" placeholder="BSN (or leave blank for all)"></div>
+          <div style="display:flex; align-items:end; gap:8px;">
+            <button class="btn-primary" id="saveCaseBtn">Add Case</button>
+            <button class="btn-secondary" id="cancelCaseBtn" style="display:none;">Cancel</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Name</th><th>Category</th><th>Required</th><th>Program</th><th>Actions</th></tr></thead><tbody id="caseTableBody"></tbody></table>
+        </div>
+      </section>
+
+      <!-- Users Tab -->
+      <section id="tab-users" class="tab-content">
+        <h3>👤 Manage Users</h3>
+        <div class="management-form" id="userForm">
+          <div><label>Email *</label><input type="email" id="userEmail" placeholder="user@example.com"></div>
+          <div><label>Password *</label><input type="password" id="userPassword" placeholder="••••••••"></div>
+          <div><label>Full Name *</label><input type="text" id="userName" placeholder="Juan Dela Cruz"></div>
+          <div><label>Role *</label><select id="userRole">
+            <option value="student">Student</option>
+            <option value="scheduler">Scheduler</option>
+            <option value="ci">Clinical Instructor</option>
+            <option value="admin">Admin</option>
+          </select></div>
+          <div id="userProgramGroup" style="display:none;"><label>Program</label><input type="text" id="userProgram" placeholder="BSN"></div>
+          <div style="display:flex; align-items:end; gap:8px;">
+            <button class="btn-primary" id="saveUserBtn">Create User</button>
+            <button class="btn-secondary" id="cancelUserBtn" style="display:none;">Cancel</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Program</th><th>Actions</th></tr></thead><tbody id="userTableBody"></tbody></table>
+        </div>
+      </section>
+    </main>
   </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabaseClient.js" type="module"></script>
-<script src="js/utils.js" type="module"></script>
-<script src="js/data.js" type="module"></script>
-<script src="js/auth.js" type="module"></script>
-<script src="js/main.js" type="module"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js" type="module"></script>
+  <script src="js/utils.js" type="module"></script>
+  <script src="js/data.js" type="module"></script>
+  <script src="js/auth.js" type="module"></script>
+  <script src="js/main.js" type="module"></script>
 </body>
 </html>

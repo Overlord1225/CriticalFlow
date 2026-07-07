@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedule Management · ClinicalFlow</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <div class="app-layout">
+    <header id="sidebarContainer"></header>
+    <main class="main-content">
+      <header class="page-header">
+        <h1><i class="fas fa-calendar-plus" style="color:#1a7a7a;"></i> Schedule Management</h1>
+        <div class="badge"><i class="fas fa-user-cog"></i> Scheduler</div>
+      </header>
+
+      <section class="schedule-form" id="createForm">
+        <h3>➕ Create New Schedule</h3>
+        <div class="form-grid">
+          <div><label>Student *</label><select id="createStudent" required></select></div>
+          <div><label>CI *</label><select id="createCI" required></select></div>
+          <div><label>Hospital *</label><select id="createHospital" required></select></div>
+          <div><label>Department *</label><select id="createDepartment" required></select></div>
+          <div><label>Date *</label><input type="date" id="createDate" required></div>
+          <div><label>Start Time *</label><input type="time" id="createStart" required></div>
+          <div><label>End Time *</label><input type="time" id="createEnd" required></div>
+          <div><label>Case Type</label><input type="text" id="createCaseType" placeholder="e.g., General Duty"></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" id="createBtn">Create Schedule</button>
+          <button class="btn-primary" style="background:#94a3b8;" id="clearFormBtn">Clear</button>
+        </div>
+      </section>
+
+      <section class="schedule-list">
+        <h3>📋 All Schedules</h3>
+        <div id="scheduleListContainer">
+          <table>
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>CI</th>
+                <th>Hospital</th>
+                <th>Department</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Case</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="scheduleTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js" type="module"></script>
+  <script src="js/utils.js" type="module"></script>
+  <script src="js/data.js" type="module"></script>
+  <script src="js/auth.js" type="module"></script>
+  <script src="js/main.js" type="module"></script>
+</body>
+</html>

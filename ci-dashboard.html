@@ -8,39 +8,52 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-<div class="app-layout">
-  <div id="sidebarContainer"></div>
-  <div class="main-content">
-    <div class="page-header">
-      <h1>👩‍⚕️ CI Dashboard</h1>
-      <div class="badge"><i class="fas fa-user-md"></i> <span id="ciName">Loading...</span></div>
-    </div>
-    <div class="table-wrap">
-      <h3 style="margin-bottom:12px;">📋 Assigned Students</h3>
-      <table><thead><tr><th>Name</th><th>Program</th><th>Year</th><th>Status</th></tr></thead><tbody id="ciStudentsTable"></tbody></table>
-    </div>
+  <div class="app-layout">
+    <header id="sidebarContainer"></header>
+    <main class="main-content">
+      <header class="page-header">
+        <h1>👩‍⚕️ CI Dashboard</h1>
+        <div class="badge"><i class="fas fa-user-md"></i> <span id="ciName">Loading...</span></div>
+      </header>
 
-    <!-- NEW: Absence marking -->
-    <div class="table-wrap" style="margin-top:24px;">
-      <h3 style="margin-bottom:12px;">⚠️ Upcoming Duties – Mark Absence</h3>
-      <table><thead><tr><th>Student</th><th>Date</th><th>Hospital</th><th>Case</th><th>Action</th></tr></thead><tbody id="ciDutiesTable"></tbody></table>
-    </div>
+      <section class="table-wrap">
+        <h3>📋 Assigned Students</h3>
+        <table><thead><tr><th>Name</th><th>Program</th><th>Year</th><th>Status</th></tr></thead><tbody id="ciStudentsTable"></tbody></table>
+      </section>
 
-    <!-- NEW: Announcement Form -->
-    <div style="margin-top:32px; background:#fff; border-radius:20px; padding:24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-      <h3 style="margin-bottom:12px;">📢 Send Announcement</h3>
-      <form id="announcementForm">
-        <textarea id="announcementMessage" rows="3" placeholder="Type your announcement here..." style="width:100%; padding:12px; border-radius:12px; border:1px solid #e9edf2; font-family:inherit;"></textarea>
-        <button type="submit" style="background:#1a7a7a; color:#fff; padding:10px 24px; border-radius:40px; font-weight:600; margin-top:12px; border:none; cursor:pointer;">Broadcast to Students</button>
-      </form>
-    </div>
+      <section class="table-wrap" style="margin-top:24px;">
+        <h3>👩‍⚕️ Manage Student Attendance</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Date</th>
+              <th>Hospital</th>
+              <th>Case</th>
+              <th>Current Status</th>
+              <th>Actions</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody id="ciDutiesTable"></tbody>
+        </table>
+      </section>
+
+      <section style="margin-top:32px; background:#fff; border-radius:20px; padding:24px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+        <h3>📢 Send Announcement</h3>
+        <form id="announcementForm">
+          <textarea id="announcementMessage" rows="3" placeholder="Type your announcement here..." style="width:100%; padding:12px; border-radius:12px; border:1px solid #e9edf2; font-family:inherit;"></textarea>
+          <button type="submit" class="btn-primary" style="margin-top:12px;">Broadcast to Students</button>
+        </form>
+      </section>
+    </main>
   </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabaseClient.js" type="module"></script>
-<script src="js/utils.js" type="module"></script>
-<script src="js/data.js" type="module"></script>
-<script src="js/auth.js" type="module"></script>
-<script src="js/main.js" type="module"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabaseClient.js" type="module"></script>
+  <script src="js/utils.js" type="module"></script>
+  <script src="js/data.js" type="module"></script>
+  <script src="js/auth.js" type="module"></script>
+  <script src="js/main.js" type="module"></script>
 </body>
 </html>
