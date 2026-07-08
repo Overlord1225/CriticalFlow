@@ -26,15 +26,12 @@ export function renderSidebar(activePage) {
   } else if (role === 'ci') {
     navItems = [
       { label: 'Dashboard', icon: 'fa-house', page: 'ci-dashboard.html' },
-      { label: 'Face Recognition', icon: 'fa-camera', page: 'face-recognition.html' },
       { label: 'Incident Report', icon: 'fa-exclamation-triangle', page: 'incident-report.html' },
       { label: 'Notifications', icon: 'fa-bell', page: 'notifications.html' },
     ];
   } else if (role === 'admin') {
     navItems = [
       { label: 'Dashboard', icon: 'fa-gauge-high', page: 'admin.html' },
-      { label: 'Schedule Management', icon: 'fa-calendar-plus', page: 'schedule-management.html' },
-      { label: 'AI Matchmaker', icon: 'fa-robot', page: 'ai-matchmaker.html' },
       { label: 'Notifications', icon: 'fa-bell', page: 'notifications.html' },
     ];
   }
