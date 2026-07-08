@@ -178,7 +178,6 @@ export async function getStudent(id) {
 }
 
 export async function getProgress(studentId) {
-<<<<<<< HEAD
   // Get all required cases from the library
   const { data: library, error: libError } = await supabase
     .from('case_library')
@@ -264,7 +263,6 @@ export async function getAllSchedules() {
     department: s.department?.name || 'Unknown',
     ciName: s.ci?.name || 'Unknown',
   }));
-=======
   try {
     const { data, error } = await supabase
       .from('required_cases')
@@ -327,7 +325,7 @@ export async function getAllSchedules() {
     console.error('Error in getAllSchedules:', error);
     return [];
   }
->>>>>>> making-changes-to-face-recognition
+
 }
 
 export async function getNotifications(userId) {
@@ -360,9 +358,7 @@ export async function markRead(notifId) {
   }
 }
 
-<<<<<<< HEAD
 // ---- Available Slots (Opportunity Board) ----
-=======
 export async function getOpenSlots() {
   try {
     const { data, error } = await supabase
@@ -400,7 +396,7 @@ export async function getStudentsByIds(ids) {
 // ===== NEW FUNCTIONS =====
 
 // ----- Opportunity Board -----
->>>>>>> making-changes-to-face-recognition
+
 export async function getAvailableSlots() {
   const { data, error } = await supabase
     .from('open_slots')
@@ -842,7 +838,6 @@ export async function getAttendanceForSchedule(scheduleId, studentId) {
 
 // ---- Analytics ----
 export async function getStudentProgressSummary() {
-<<<<<<< HEAD
   // Get all students
   const { data: students, error } = await supabase
     .from('users')
@@ -890,7 +885,6 @@ export async function getStudentProgressSummary() {
       percentage: total ? Math.round((completed / total) * 100) : 0,
     };
   });
-=======
   try {
     const { data: students, error } = await supabase
       .from('users')
@@ -912,7 +906,6 @@ export async function getStudentProgressSummary() {
         percentage: total ? Math.round((completed / total) * 100) : 0
       };
     }));
->>>>>>> making-changes-to-face-recognition
 
     // Count absences per student
     const { data: absences, error: absError } = await supabase
@@ -933,7 +926,6 @@ export async function getStudentProgressSummary() {
 }
 
 export async function getHospitalUtilization() {
-<<<<<<< HEAD
   const { data, error } = await supabase
     .from('schedules')
     .select(`
@@ -957,7 +949,6 @@ export async function getHospitalUtilization() {
     }
   });
   return utilization;
-=======
   try {
     const { data, error } = await supabase
       .from('schedules')
@@ -981,7 +972,6 @@ export async function getHospitalUtilization() {
     console.error('Error in getHospitalUtilization:', error);
     return {};
   }
->>>>>>> making-changes-to-face-recognition
 }
 
 // ---- Admin Management ----

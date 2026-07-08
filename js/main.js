@@ -884,7 +884,7 @@ export async function initCasePassport() {
   }
 }
 
-<<<<<<< HEAD
+
 function showCaseSubmissionModal(studentId, caseLibraryId) {
   const date = prompt('Enter date completed (YYYY-MM-DD):');
   if (!date) return;
@@ -997,13 +997,11 @@ export async function initCaseVerification() {
   }
 }
 
-export function initQRAttendance() {
-// ------ Face Recognition Attendance ------
 let faceScanningInterval = null;
 let isScanningMultiple = false;
 
 export async function initFaceAttendance() {
->>>>>>> making-changes-to-face-recognition
+making-changes-to-face-recognition
   const user = requireAuth();
   if (!user) return;
   const role = user.role;
@@ -2125,13 +2123,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     initSendAnnouncement();
   } else if (path === 'case-passport.html') {
     await initCasePassport();
-<<<<<<< HEAD
   } else if (path === 'attendance.html') {
     await initAttendance();
-=======
   } else if (path === 'qr-attendance.html') {
     await initFaceAttendance();
->>>>>>> making-changes-to-face-recognition
   } else if (path === 'ai-matchmaker.html') {
     await initAIMatchmaker();
   } else if (path === 'notifications.html') {
