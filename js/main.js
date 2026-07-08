@@ -998,7 +998,6 @@ export async function initCaseVerification() {
 }
 
 export function initQRAttendance() {
-=======
 // ------ Face Recognition Attendance ------
 let faceScanningInterval = null;
 let isScanningMultiple = false;
