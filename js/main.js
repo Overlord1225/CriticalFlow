@@ -36,6 +36,7 @@ export function renderSidebar(activePage) {
       { label: 'Case Passport', icon: 'fa-passport', page: 'case-passport.html' },
       { label: 'Opportunity Board', icon: 'fa-bullhorn', page: 'opportunity-board.html' },
       { label: 'Attendance', icon: 'fa-fingerprint', page: 'attendance.html' },
+      { label: 'Face Recognition', icon: 'fa-camera', page: 'face-recognition.html' },
       { label: 'Notifications', icon: 'fa-bell', page: 'notifications.html' },
     ];
   } else if (role === 'scheduler' || role === 'admin') {
@@ -50,6 +51,7 @@ export function renderSidebar(activePage) {
     navItems = [
       { label: 'Dashboard', icon: 'fa-house', page: 'ci-dashboard.html' },
       { label: 'Attendance', icon: 'fa-fingerprint', page: 'attendance.html' },
+      { label: 'Face Recognition', icon: 'fa-camera', page: 'face-recognition.html' },
       { label: 'Notifications', icon: 'fa-bell', page: 'notifications.html' },
     ];
   }
@@ -1005,7 +1007,6 @@ let faceScanningInterval = null;
 let isScanningMultiple = false;
 
 export async function initFaceAttendance() {
-making-changes-to-face-recognition
   const user = requireAuth();
   if (!user) return;
   const role = user.role;
@@ -2129,7 +2130,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initCasePassport();
   } else if (path === 'attendance.html') {
     await initAttendance();
-  } else if (path === 'qr-attendance.html') {
+  } else if (path === 'face-recognition.html') {
     await initFaceAttendance();
   } else if (path === 'ai-matchmaker.html') {
     await initAIMatchmaker();

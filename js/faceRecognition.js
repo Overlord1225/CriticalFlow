@@ -1,6 +1,3 @@
-// js/faceRecognition.js
-// Face recognition service using face-api.js
-
 let faceapiLoaded = false;
 let modelsLoaded = false;
 
