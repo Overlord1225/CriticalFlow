@@ -318,6 +318,24 @@ export function initSendAnnouncement() {
 }
 
 // ----- Create Open Slot Form -----
+async function loadOpenSlotDropdowns() {
+  const hospitals = await getHospitals();
+  const cis = await getCIs();
+  const cases = await getCaseLibrary();
+
+  const hospitalSelect = document.getElementById('openSlotHospital');
+  hospitalSelect.innerHTML = '<option value="">Select Hospital</option>' +
+    hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
+
+  const ciSelect = document.getElementById('openSlotCI');
+  ciSelect.innerHTML = '<option value="">Select CI</option>' +
+    cis.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+
+  const caseSelect = document.getElementById('openSlotCaseType');
+  caseSelect.innerHTML = '<option value="">Select Case Type</option>' +
+    cases.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+}
+
 export function initCreateOpenSlotForm() {
   const user = requireAuth();
   if (!user || (user.role !== 'scheduler' && user.role !== 'admin')) return;
@@ -325,36 +343,31 @@ export function initCreateOpenSlotForm() {
   const form = document.getElementById('openSlotForm');
   if (!form) return;
 
-  // Load dropdowns
-  (async () => {
-    const hospitals = await getHospitals();
-    const cis = await getCIs();
-    const cases = await getCaseLibrary();
+  // Load dropdowns with error handling
+  loadOpenSlotDropdowns().catch(err => {
+    console.error('Failed to load open slot dropdowns:', err);
+    showToast('Error loading form data: ' + err.message, 'error');
+  });
 
-    const hospitalSelect = document.getElementById('openSlotHospital');
-    hospitalSelect.innerHTML = '<option value="">Select Hospital</option>' +
-      hospitals.map(h => `<option value="${h.id}">${h.name}</option>`).join('');
-
-    const ciSelect = document.getElementById('openSlotCI');
-    ciSelect.innerHTML = '<option value="">Select CI</option>' +
-      cis.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-
-    const caseSelect = document.getElementById('openSlotCaseType');
-    caseSelect.innerHTML = '<option value="">Select Case Type</option>' +
-      cases.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
-
-    // Hospital -> Department cascade
-    hospitalSelect.addEventListener('change', async () => {
-      const deptSelect = document.getElementById('openSlotDepartment');
-      if (!hospitalSelect.value) {
-        deptSelect.innerHTML = '<option value="">Select Department</option>';
-        return;
-      }
+  // Hospital -> Department cascade
+  const hospitalSelect = document.getElementById('openSlotHospital');
+  hospitalSelect.addEventListener('change', async () => {
+    const deptSelect = document.getElementById('openSlotDepartment');
+    deptSelect.innerHTML = '<option value="">Loading departments...</option>';
+    if (!hospitalSelect.value) {
+      deptSelect.innerHTML = '<option value="">Select Department</option>';
+      return;
+    }
+    try {
       const depts = await getDepartmentsByHospital(hospitalSelect.value);
       deptSelect.innerHTML = '<option value="">Select Department</option>' +
         depts.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
-    });
-  })();
+    } catch (err) {
+      console.error('Error loading departments:', err);
+      deptSelect.innerHTML = '<option value="">Select Department</option>';
+      showToast('Error loading departments: ' + err.message, 'error');
+    }
+  });
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -382,8 +395,15 @@ export function initCreateOpenSlotForm() {
       submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
       await createOpenSlot(payload);
       showToast('Open slot created successfully!', 'success');
-      form.reset();
+      // Manually reset all dropdowns (form.reset() doesn't always work with dynamically populated selects)
+      document.getElementById('openSlotHospital').selectedIndex = 0;
       document.getElementById('openSlotDepartment').innerHTML = '<option value="">Select Department</option>';
+      document.getElementById('openSlotCI').selectedIndex = 0;
+      document.getElementById('openSlotCaseType').selectedIndex = 0;
+      document.getElementById('openSlotDate').value = '';
+      document.getElementById('openSlotStart').value = '';
+      document.getElementById('openSlotEnd').value = '';
+      document.getElementById('openSlotMax').value = '1';
     } catch (err) {
       showToast('Error creating slot: ' + err.message, 'error');
     } finally {
@@ -403,6 +423,10 @@ export async function initAIMatchmaker() {
     showLoading('matchContainer', 'Loading recommendations...');
 
     const slots = await getAvailableSlots();
+
+    // Always init the create open slot form (dropdowns) regardless of whether slots exist
+    initCreateOpenSlotForm();
+
     if (!slots || slots.length === 0) {
       container.innerHTML = '<p>No open slots available for matching.</p>';
       hideLoading('matchContainer');
@@ -485,9 +509,6 @@ export async function initAIMatchmaker() {
     }
 
     hideLoading('matchContainer');
-
-    // Init create open slot form
-    initCreateOpenSlotForm();
   } catch (err) {
     console.error('AI Matchmaker error:', err);
     hideLoading('matchContainer');
