@@ -6,7 +6,8 @@ export async function loadFaceApiModels() {
   if (modelsLoaded) return true;
 
   try {
-    const MODEL_URL = '/js/face-api-models/';
+    // Use a relative path (works whether server is at Sipag/ root or CriticalFlow/ root)
+    const MODEL_URL = 'js/face-api-models/';
     
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),

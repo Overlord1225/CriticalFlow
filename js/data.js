@@ -676,7 +676,13 @@ export async function getCurrentPosition() {
     if (!navigator.geolocation) reject(new Error('Geolocation not supported'));
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy }),
-      (err) => reject(new Error('GPS error: ' + err.message))
+      (err) => {
+        let message = 'GPS error: ' + err.message;
+        if (err.code === 2) {
+          message = 'GPS error: Unable to determine your location. Please ensure you have an active internet connection and location services are enabled.';
+        }
+        reject(new Error(message));
+      }
     );
   });
 }
@@ -706,6 +712,23 @@ export async function verifyGPS(studentId, scheduleId) {
   const dist = distance(pos.lat, pos.lng, hospital.latitude, hospital.longitude);
   const radius = hospital.attendance_radius || 100;
   const within = dist <= radius;
+
+  console.log('📍 Hospital Location:', {
+    latitude: hospital.latitude,
+    longitude: hospital.longitude,
+    attendance_radius: radius
+  });
+  console.log('📍 User GPS Location:', {
+    latitude: pos.lat,
+    longitude: pos.lng,
+    accuracy: pos.accuracy
+  });
+  console.log('📍 Distance Check:', {
+    distance_meters: Math.round(dist),
+    within_radius: within,
+    radius_meters: radius
+  });
+
   return {
     within,
     distance: dist,

@@ -163,7 +163,7 @@ export async function performTimeIn() {
       { in: { lat: gpsResult.position.lat, lng: gpsResult.position.lng, accuracy: gpsResult.position.accuracy } },
       false,
       false,
-      'gps',
+      'biometric',
       status
     );
 
